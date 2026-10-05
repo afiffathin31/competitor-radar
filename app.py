@@ -11,7 +11,7 @@ import spaces
 import gradio as gr
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+
 from server_app.api.routers import projects, internal_app, competitors, analysis, exports, settings as api_settings
 from server_app.core.database import init_db
 
@@ -40,42 +40,49 @@ def _gpu_probe():
     return True
 
 # Build Gradio Blocks demo
-with gr.Blocks(title="Competitor Radar AI") as demo:
-    gr.Markdown("# 📡 Competitor Radar AI\nSistem Intelijen Pasar & Riset Kompetitor Aplikasi Android.")
-    gr.HTML('<p style="margin-bottom:12px;"><a href="/app" style="display:inline-block;padding:12px 24px;background:#0d9488;color:white;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 4px 6px -1px rgba(13,148,136,0.3);">🚀 Buka Dashboard Aplikasi (Full Screen) &rarr;</a> <a href="/api/docs" target="_blank" style="margin-left:12px;display:inline-block;padding:12px 20px;background:#3b82f6;color:white;border-radius:8px;text-decoration:none;font-weight:600;">📚 API Documentation &rarr;</a></p>')
-    gr.HTML('<iframe src="/app" style="width:100%; height:900px; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1);"></iframe>')
+custom_css = """
+body, .gradio-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+}
+footer {
+    display: none !important;
+}
+"""
+
+with gr.Blocks(title="Competitor Radar AI", css=custom_css) as demo:
+    gr.HTML('''
+    <div style="height: 100vh; width: 100%; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <div style="background: #0f172a; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b;">
+            <div style="font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px;">📡</span> Competitor Radar AI
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a href="/app/" target="_blank" style="padding: 6px 14px; background: #0d9488; color: white; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600;">🚀 Buka Layar Penuh &rarr;</a>
+                <a href="/api/docs" target="_blank" style="padding: 6px 14px; background: #334155; color: white; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600;">📚 API Docs</a>
+            </div>
+        </div>
+        <iframe src="/app/" style="flex: 1; width: 100%; border: none;"></iframe>
+    </div>
+    ''')
     probe_btn = gr.Button("ZeroGPU Probe", visible=False)
     probe_btn.click(fn=_gpu_probe, inputs=[], outputs=[])
 
-# Launch Gradio server (coordinating with ZeroGPU supervisor)
-port = int(os.environ.get("PORT", 7860))
-app, _, _ = demo.launch(
-    server_name="0.0.0.0",
-    server_port=port,
-    prevent_thread_lock=True,
-    show_error=True
-)
+# Mount /api onto demo.app BEFORE launch!
+demo.app.mount("/api", api_app)
 
-# Mount REST API
-app.mount("/api", api_app)
-
-# Mount static React frontend
+# Mount /app for static React frontend onto demo.app BEFORE launch!
 dist_dir = Path(__file__).resolve().parent / "frontend" / "dist"
 if dist_dir.exists():
-    if (dist_dir / "assets").exists():
-        app.mount("/assets", StaticFiles(directory=dist_dir / "assets"), name="spa-assets")
-        app.mount("/app/assets", StaticFiles(directory=dist_dir / "assets"), name="spa-sub-assets")
+    demo.app.mount("/app", StaticFiles(directory=str(dist_dir), html=True), name="app")
 
-    @app.get("/app/{full_path:path}")
-    async def serve_spa_path(full_path: str = ""):
-        target_file = dist_dir / full_path
-        if full_path and target_file.is_file():
-            return FileResponse(target_file)
-        return FileResponse(dist_dir / "index.html")
-
-    @app.get("/app")
-    async def serve_spa_root():
-        return FileResponse(dist_dir / "index.html")
-
-print("Competitor Radar AI running successfully on Hugging Face Spaces!")
-demo.block_thread()
+# Launch Gradio server (coordinating with ZeroGPU supervisor)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 7860))
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=port,
+        prevent_thread_lock=False,
+        show_error=True
+    )
