@@ -1,5 +1,6 @@
 import sys
 import os
+import socket
 from pathlib import Path
 
 # Add backend directory to sys.path
@@ -9,60 +10,78 @@ if str(backend_path) not in sys.path:
 
 import spaces
 import gradio as gr
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
+import uvicorn
 
 from server_app.api.routers import projects, internal_app, competitors, analysis, exports, settings as api_settings
 from server_app.core.database import init_db
 
+# Initialize database schema
 try:
     init_db()
 except Exception as db_err:
     print(f"Database init warning: {db_err}")
 
-# ZeroGPU Probe
+# ZeroGPU Probe & Startup Report
 @spaces.GPU
 def _gpu_probe():
     return True
 
-dist_dir = Path(__file__).resolve().parent / "frontend" / "dist"
+try:
+    if hasattr(spaces, "_zerogpu_startup_report"):
+        spaces._zerogpu_startup_report()
+    elif hasattr(spaces, "zero") and hasattr(spaces.zero, "_zerogpu_startup_report"):
+        spaces.zero._zerogpu_startup_report()
+except Exception:
+    pass
 
-with gr.Blocks(title="Competitor Radar AI", css="""
-body, .gradio-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
-footer { display: none !important; }
-""") as demo:
-    probe_btn = gr.Button("ZeroGPU Probe", visible=False)
-    probe_btn.click(fn=_gpu_probe, inputs=[], outputs=[])
+# 1. Main FastAPI App
+app = FastAPI(title="Competitor Radar AI")
 
-    # Full screen overlay of the React frontend
-    gr.HTML('<iframe src="/app/" style="position:fixed; top:0; left:0; width:100vw; height:100vh; border:none; z-index:9999;"></iframe>')
+# Mount API routers
+app.include_router(projects.router, prefix="/api")
+app.include_router(internal_app.router, prefix="/api")
+app.include_router(competitors.router, prefix="/api")
+app.include_router(analysis.router, prefix="/api")
+app.include_router(exports.router, prefix="/api")
+app.include_router(api_settings.router, prefix="/api")
 
-# Mount API routers directly onto demo.app
-demo.app.include_router(projects.router, prefix="/api")
-demo.app.include_router(internal_app.router, prefix="/api")
-demo.app.include_router(competitors.router, prefix="/api")
-demo.app.include_router(analysis.router, prefix="/api")
-demo.app.include_router(exports.router, prefix="/api")
-demo.app.include_router(api_settings.router, prefix="/api")
-
-@demo.app.get("/api/health")
+@app.get("/api/health")
 def health():
     return {"status": "ok", "service": "competitor-radar"}
 
-# Serve frontend static assets under /app/ and /assets/
+# 2. Static React Frontend
+dist_dir = Path(__file__).resolve().parent / "frontend" / "dist"
 if dist_dir.exists():
-    demo.app.mount("/app", StaticFiles(directory=str(dist_dir), html=True), name="app")
-    assets_dir = dist_dir / "assets"
-    if assets_dir.exists():
-        demo.app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+    app.mount("/app", StaticFiles(directory=str(dist_dir), html=True), name="app")
 
-@demo.app.get("/app")
-def redirect_app():
+@app.get("/")
+def root():
     return RedirectResponse(url="/app/")
 
+@app.get("/app")
+def app_redirect():
+    return RedirectResponse(url="/app/")
+
+# 3. Mount Gradio probe onto FastAPI
+with gr.Blocks(title="Competitor Radar AI - GPU Gateway") as demo:
+    probe_btn = gr.Button("ZeroGPU Probe", visible=False)
+    probe_btn.click(fn=_gpu_probe, inputs=[], outputs=[])
+
+app = gr.mount_gradio_app(app, demo, path="/gradio")
+
+# 4. Run Uvicorn on port 7860 with SO_REUSEADDR (eliminates [Errno 98])
 if __name__ == "__main__":
-    demo.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
-        ssr_mode=False
-    )
+    port = int(os.environ.get("PORT", 7860))
+    print(f"Binding socket on port {port} with SO_REUSEADDR...")
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(("0.0.0.0", port))
+    sock.listen(128)
+
+    config = uvicorn.Config(app, log_level="info")
+    server = uvicorn.Server(config)
+    server.run(sockets=[sock])
