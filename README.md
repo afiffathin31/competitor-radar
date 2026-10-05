@@ -1,10 +1,12 @@
 ---
-title: Competitor Radar AI
+title: Competitor Radar
 emoji: 🎯
 colorFrom: teal
 colorTo: orange
-sdk: docker
-app_port: 7860
+sdk: gradio
+sdk_version: 6.29.1
+python_version: '3.12'
+app_file: run_app.py
 pinned: false
 license: mit
 ---
