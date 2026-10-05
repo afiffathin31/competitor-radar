@@ -72,11 +72,7 @@ with gr.Blocks(title="Competitor Radar AI - GPU Gateway") as demo:
 app = gr.mount_gradio_app(app, demo, path="/gradio")
 
 if __name__ == "__main__":
-    # If HF ingress proxy is on 7860, fall back to 7861
-    for p in [7860, 7861]:
-        try:
-            print(f"Starting Uvicorn on port {p}...")
-            uvicorn.run(app, host="0.0.0.0", port=p)
-            break
-        except OSError as e:
-            print(f"Port {p} failed: {e}. Trying port 7861...")
+    # In HF ZeroGPU spaces, ingress proxy owns 7860 and forwards to 7861
+    port = int(os.environ.get("PORT", 7861))
+    print(f"Starting Uvicorn directly on port {port}...")
+    uvicorn.run(app, host="0.0.0.0", port=port)
