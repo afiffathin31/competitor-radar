@@ -1,6 +1,5 @@
 import sys
 import os
-import socket
 from pathlib import Path
 
 # Add backend directory to sys.path
@@ -10,78 +9,67 @@ if str(backend_path) not in sys.path:
 
 import spaces
 import gradio as gr
-from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
-import uvicorn
 
 from server_app.api.routers import projects, internal_app, competitors, analysis, exports, settings as api_settings
 from server_app.core.database import init_db
 
-# Initialize database schema
 try:
     init_db()
 except Exception as db_err:
     print(f"Database init warning: {db_err}")
 
-# ZeroGPU Probe & Startup Report
+# ZeroGPU Probe
 @spaces.GPU
 def _gpu_probe():
     return True
 
-try:
-    if hasattr(spaces, "_zerogpu_startup_report"):
-        spaces._zerogpu_startup_report()
-    elif hasattr(spaces, "zero") and hasattr(spaces.zero, "_zerogpu_startup_report"):
-        spaces.zero._zerogpu_startup_report()
-except Exception:
-    pass
-
-# 1. Main FastAPI App
-app = FastAPI(title="Competitor Radar AI")
-
-# Mount API routers
-app.include_router(projects.router, prefix="/api")
-app.include_router(internal_app.router, prefix="/api")
-app.include_router(competitors.router, prefix="/api")
-app.include_router(analysis.router, prefix="/api")
-app.include_router(exports.router, prefix="/api")
-app.include_router(api_settings.router, prefix="/api")
-
-@app.get("/api/health")
-def health():
-    return {"status": "ok", "service": "competitor-radar"}
-
-# 2. Static React Frontend
 dist_dir = Path(__file__).resolve().parent / "frontend" / "dist"
-if dist_dir.exists():
-    app.mount("/app", StaticFiles(directory=str(dist_dir), html=True), name="app")
+css_file = "index-DQGFL0eV.css"
+js_file = "index-D4PbbeRY.js"
 
-@app.get("/")
-def root():
-    return RedirectResponse(url="/app/")
+if (dist_dir / "assets").exists():
+    css_candidates = list((dist_dir / "assets").glob("*.css"))
+    js_candidates = list((dist_dir / "assets").glob("*.js"))
+    if css_candidates:
+        css_file = css_candidates[0].name
+    if js_candidates:
+        js_file = js_candidates[0].name
 
-@app.get("/app")
-def app_redirect():
-    return RedirectResponse(url="/app/")
+react_html = f'''
+<div id="root"></div>
+<link rel="stylesheet" href="/static_assets/assets/{css_file}">
+<script type="module" src="/static_assets/assets/{js_file}"></script>
+'''
 
-# 3. Mount Gradio probe onto FastAPI
-with gr.Blocks(title="Competitor Radar AI - GPU Gateway") as demo:
+with gr.Blocks(title="Competitor Radar AI", css="""
+body, .gradio-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+footer { display: none !important; }
+""") as demo:
     probe_btn = gr.Button("ZeroGPU Probe", visible=False)
     probe_btn.click(fn=_gpu_probe, inputs=[], outputs=[])
 
-app = gr.mount_gradio_app(app, demo, path="/gradio")
+    gr.HTML(react_html)
 
-# 4. Run Uvicorn on port 7860 with SO_REUSEADDR (eliminates [Errno 98])
+# Mount API routers onto demo.app with prefix="/api"
+demo.app.include_router(projects.router, prefix="/api")
+demo.app.include_router(internal_app.router, prefix="/api")
+demo.app.include_router(competitors.router, prefix="/api")
+demo.app.include_router(analysis.router, prefix="/api")
+demo.app.include_router(exports.router, prefix="/api")
+demo.app.include_router(api_settings.router, prefix="/api")
+
+@demo.app.get("/api/health")
+def health():
+    return {"status": "ok", "service": "competitor-radar"}
+
+# Mount frontend assets
+if dist_dir.exists():
+    demo.app.mount("/static_assets", StaticFiles(directory=str(dist_dir)), name="static_assets")
+
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 7860))
-    print(f"Binding socket on port {port} with SO_REUSEADDR...")
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(("0.0.0.0", port))
-    sock.listen(128)
-
-    config = uvicorn.Config(app, log_level="info")
-    server = uvicorn.Server(config)
-    server.run(sockets=[sock])
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=7860,
+        ssr_mode=False
+    )
