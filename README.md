@@ -1,8 +1,8 @@
 ---
 title: Competitor Radar
 emoji: 🎯
-colorFrom: teal
-colorTo: orange
+colorFrom: blue
+colorTo: indigo
 sdk: gradio
 sdk_version: 6.29.1
 python_version: '3.12'
