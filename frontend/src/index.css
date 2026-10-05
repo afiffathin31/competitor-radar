@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --brand-teal: #1acab6;
+    --brand-teal-dark: #0d9488;
+    --brand-teal-deep: #0f766e;
+    --brand-teal-light: #ebfbf8;
+
+    --brand-orange: #f77925;
+    --brand-orange-dark: #c25510;
+    --brand-orange-light: #fff6ef;
+
+    --brand-coral: #e33723;
+    --brand-coral-dark: #b91c1c;
+    --brand-coral-light: #fdf3f2;
+
+    --neutral-bg: #f8fafc;
+    --neutral-surface: #ffffff;
+    --neutral-border: #e2e8f0;
+    --neutral-text: #0f172a;
+    --neutral-muted: #64748b;
+
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', Helvetica, Arial, sans-serif;
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--neutral-bg);
+    color: var(--neutral-text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Minimalist refined scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

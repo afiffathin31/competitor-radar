@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: competitor-radar
+    env: docker
+    plan: free
+    region: singapore
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DEFAULT_LLM_PROVIDER
+        value: gemini
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_9cRPoj4QwXKk@ep-lucky-flower-b5izuwtt-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require
