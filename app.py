@@ -17,7 +17,7 @@ import uvicorn
 from server_app.api.routers import projects, internal_app, competitors, analysis, exports, settings as api_settings
 from server_app.core.database import init_db
 
-# Initialize database schema on startup
+# Initialize database schema
 try:
     init_db()
 except Exception as db_err:
@@ -28,16 +28,15 @@ except Exception as db_err:
 def _gpu_probe():
     return True
 
-# Explicitly notify ZeroGPU supervisor of startup completion
 try:
     if hasattr(spaces, "_zerogpu_startup_report"):
         spaces._zerogpu_startup_report()
     elif hasattr(spaces, "zero") and hasattr(spaces.zero, "_zerogpu_startup_report"):
         spaces.zero._zerogpu_startup_report()
-except Exception as err:
-    print(f"ZeroGPU report note: {err}")
+except Exception:
+    pass
 
-# 1. Main FastAPI App
+# Main FastAPI App
 app = FastAPI(title="Competitor Radar AI")
 
 # Mount API routers
@@ -52,7 +51,7 @@ app.include_router(api_settings.router, prefix="/api")
 def health():
     return {"status": "ok", "service": "competitor-radar"}
 
-# 2. Static React Frontend
+# Mount React static frontend
 dist_dir = Path(__file__).resolve().parent / "frontend" / "dist"
 if dist_dir.exists():
     app.mount("/app", StaticFiles(directory=str(dist_dir), html=True), name="app")
@@ -65,14 +64,19 @@ def root():
 def app_redirect():
     return RedirectResponse(url="/app/")
 
-# 3. Mount Gradio probe onto FastAPI
+# Mount Gradio probe
 with gr.Blocks(title="Competitor Radar AI - GPU Gateway") as demo:
     probe_btn = gr.Button("ZeroGPU Probe", visible=False)
     probe_btn.click(fn=_gpu_probe, inputs=[], outputs=[])
 
 app = gr.mount_gradio_app(app, demo, path="/gradio")
 
-# 4. Run native Uvicorn server on port 7860
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 7860))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # If HF ingress proxy is on 7860, fall back to 7861
+    for p in [7860, 7861]:
+        try:
+            print(f"Starting Uvicorn on port {p}...")
+            uvicorn.run(app, host="0.0.0.0", port=p)
+            break
+        except OSError as e:
+            print(f"Port {p} failed: {e}. Trying port 7861...")
