@@ -1,3 +1,14 @@
+---
+title: Competitor Radar AI
+emoji: 🎯
+colorFrom: teal
+colorTo: orange
+sdk: docker
+app_port: 7860
+pinned: false
+license: mit
+---
+
 # 📡 CompetitorRadar AI — Sistem Riset Kompetitor Aplikasi Android
 
 Sistem intelijen pasar (*Competitor Intelligence*) berbasis AI untuk menganalisis aplikasi Android kompetitor, mengekstrak inovasi fitur yang belum diadopsi, mengaudit titik friksi *user flow*, dan menyajikan laporan komprehensif beserta bukti sitasi sumber resmi (*provenance links*).
