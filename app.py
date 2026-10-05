@@ -77,12 +77,12 @@ dist_dir = Path(__file__).resolve().parent / "frontend" / "dist"
 if dist_dir.exists():
     demo.app.mount("/app", StaticFiles(directory=str(dist_dir), html=True), name="app")
 
-# Launch Gradio server (coordinating with ZeroGPU supervisor)
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
     demo.launch(
         server_name="0.0.0.0",
         server_port=port,
+        ssr_mode=False,
         prevent_thread_lock=False,
         show_error=True
     )
