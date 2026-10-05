@@ -15,14 +15,6 @@ with gr.Blocks(title="Competitor Radar AI") as demo:
     gr.Markdown("### Competitor Radar AI\nSistem Intelijen Pasar & Riset Kompetitor Aplikasi Android.")
     gr.HTML('<p><a href="/" style="display:inline-block;padding:10px 18px;background:#0d9488;color:white;border-radius:8px;text-decoration:none;font-weight:600;">Buka Dashboard Utama &rarr;</a></p>')
 
-# ZeroGPU probe to satisfy supervisor if running on ZeroGPU hardware
-try:
-    import spaces
-    @spaces.GPU
-    def _probe_gpu():
-        pass
-except Exception:
-    pass
 
 # Mount Gradio app under /gradio; fastapi_app continues serving / and /api
 app = gr.mount_gradio_app(fastapi_app, demo, path="/gradio")
