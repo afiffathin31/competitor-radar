@@ -3,8 +3,8 @@ from sqlmodel import Session, select
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
-from app.core.database import get_session
-from app.models.models import Project, InternalApp, Competitor, AnalysisReport
+from server_app.core.database import get_session
+from server_app.models.models import Project, InternalApp, Competitor, AnalysisReport
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 

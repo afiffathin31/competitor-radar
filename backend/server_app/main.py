@@ -3,11 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 import json
-from app.core.config import settings
-from app.core.database import init_db, engine
+from server_app.core.config import settings
+from server_app.core.database import init_db, engine
 from sqlmodel import Session, select
-from app.models.models import Project, InternalApp, Competitor
-from app.api.routers import projects, internal_app, competitors, analysis, exports, settings as api_settings
+from server_app.models.models import Project, InternalApp, Competitor
+from server_app.api.routers import projects, internal_app, competitors, analysis, exports, settings as api_settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

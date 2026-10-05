@@ -4,8 +4,8 @@ from typing import List, Optional, Any, Dict
 from datetime import datetime, timezone
 from pydantic import BaseModel
 import json
-from app.core.database import get_session
-from app.models.models import InternalApp, Project
+from server_app.core.database import get_session
+from server_app.models.models import InternalApp, Project
 
 router = APIRouter(prefix="/internal-app", tags=["internal-app"])
 

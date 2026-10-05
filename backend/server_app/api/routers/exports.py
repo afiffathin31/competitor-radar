@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import StreamingResponse, HTMLResponse
 from sqlmodel import Session
-from app.core.database import get_session
-from app.models.models import AnalysisReport
-from app.api.routers.analysis import format_report_response
-from app.services.exporter import ExportService
+from server_app.core.database import get_session
+from server_app.models.models import AnalysisReport
+from server_app.api.routers.analysis import format_report_response
+from server_app.services.exporter import ExportService
 
 router = APIRouter(prefix="/exports", tags=["exports"])
 

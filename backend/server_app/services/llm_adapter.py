@@ -3,7 +3,7 @@ import json
 import logging
 from typing import Dict, Any, Optional
 import httpx
-from app.core.config import settings
+from server_app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class LLMAdapter:
         # Coba ambil dari DB jika session diberikan
         if session:
             try:
-                from app.models.models import AppSetting
+                from server_app.models.models import AppSetting
                 from sqlmodel import select
                 st = session.exec(select(AppSetting).where(AppSetting.key == env_var)).first()
                 if st and st.value.strip():
@@ -43,7 +43,7 @@ class LLMAdapter:
         """
         if session:
             try:
-                from app.models.models import AppSetting
+                from server_app.models.models import AppSetting
                 from sqlmodel import select
                 st = session.exec(select(AppSetting).where(AppSetting.key == key_name)).first()
                 if st and st.value.strip():

@@ -2,13 +2,13 @@ import json
 import logging
 from typing import List, Dict, Any
 from sqlmodel import Session, select
-from app.models.models import (
+from server_app.models.models import (
     Project, InternalApp, Competitor, AnalysisReport, 
     FeatureGapItem, FlowComparisonItem, CompetitorOverviewItem
 )
-from app.services.scraper_playstore import PlayStoreScraper
-from app.services.scraper_web import WebScraper
-from app.services.llm_adapter import LLMAdapter
+from server_app.services.scraper_playstore import PlayStoreScraper
+from server_app.services.scraper_web import WebScraper
+from server_app.services.llm_adapter import LLMAdapter
 
 logger = logging.getLogger(__name__)
 

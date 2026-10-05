@@ -3,11 +3,11 @@ from sqlmodel import Session, select
 from typing import List, Optional
 from pydantic import BaseModel
 import json
-from app.core.database import get_session
-from app.models.models import Competitor, Project, InternalApp
-from app.services.scraper_playstore import PlayStoreScraper
-from app.services.scraper_web import WebScraper
-from app.services.analysis_engine import AnalysisEngine
+from server_app.core.database import get_session
+from server_app.models.models import Competitor, Project, InternalApp
+from server_app.services.scraper_playstore import PlayStoreScraper
+from server_app.services.scraper_web import WebScraper
+from server_app.services.analysis_engine import AnalysisEngine
 
 router = APIRouter(prefix="/competitors", tags=["competitors"])
 

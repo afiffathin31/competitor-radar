@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, create_engine, Session
-from app.core.config import settings
+from server_app.core.config import settings
 
 connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
 engine_kwargs = {"echo": False, "connect_args": connect_args}

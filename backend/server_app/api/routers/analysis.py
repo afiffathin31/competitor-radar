@@ -3,12 +3,12 @@ from sqlmodel import Session, select
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 import json
-from app.core.database import get_session
-from app.models.models import (
+from server_app.core.database import get_session
+from server_app.models.models import (
     AnalysisReport, FeatureGapItem, FlowComparisonItem, 
     CompetitorOverviewItem, Project, InternalApp, Competitor
 )
-from app.services.analysis_engine import AnalysisEngine
+from server_app.services.analysis_engine import AnalysisEngine
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 

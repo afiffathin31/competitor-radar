@@ -3,9 +3,9 @@ from sqlmodel import Session, select
 from typing import Dict, Any
 from pydantic import BaseModel
 import os
-from app.core.database import get_session
-from app.models.models import AppSetting
-from app.core.config import settings
+from server_app.core.database import get_session
+from server_app.models.models import AppSetting
+from server_app.core.config import settings
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
