@@ -1,12 +1,10 @@
 ---
 title: Competitor Radar
-emoji: 🎯
-colorFrom: blue
-colorTo: indigo
-sdk: gradio
-sdk_version: 6.29.1
-python_version: '3.12'
-app_file: app.py
+emoji: 📡
+colorFrom: indigo
+colorTo: pink
+sdk: docker
+app_port: 7860
 pinned: false
 license: mit
 ---
